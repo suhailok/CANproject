@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <esp_wifi.h> 
+#include <string.h>
 
 #define UART Serial
 // Replace these with your network credentials
@@ -10,10 +11,10 @@ uint8_t newMACAddress[] = {0xf4, 0x96, 0x34, 0x9d, 0xe5, 0xd6};  // f9 f4:96:34:
 // Replace with your ThingSpeak credentials
 const char* serverName = "http://api.thingspeak.com/update";
 const char* apiKey = "YO44GNXIBTVG8NI4";
-String incomingData;
+//String incomingData;
 int temp;
 int humidity;
-
+String data;
 
 void setup() {
   Serial.begin(115200);
@@ -30,15 +31,22 @@ void setup() {
 }
 
 void loop() {
+  for(int i=0;i<2;i++){
+      while(!UART.available());
+        data = UART.readStringUntil('\n');
+        if(data[0]=='H')
+        {
+          humidity=(int)data[1];
+        }else if(data[0]=='T'){
+        temp=(int)data[1];
+   }
+  }
+   
 
-  if (UART.available()) {
-    // Read the incoming data as a string
-    incomingData = UART.readStringUntil('\n'); // Read until newline character
 
-    // Convert the string to an integer
-    temp = incomingData.toInt();
-    incomingData = UART.readStringUntil('\n');
-    humidity = incomingData.toInt();
+   // temp = incomingData.toInt();
+   // incomingData = UART.readStringUntil('\n');
+   // humidity = incomingData.toInt();
     // Print the received integer value to the Serial Monitor
     Serial.print("Received humid Value: ");
     Serial.println(humidity);
@@ -46,7 +54,7 @@ void loop() {
     Serial.println(temp);
     // You can now use the integer value in your application
     // For example, controlling an LED based on the received value
-  }
+  
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -56,6 +64,8 @@ void loop() {
 
     http.begin(url);
     int httpResponseCode = http.GET();
+    temp=0;
+    humidity=0;
     
     if (httpResponseCode > 0) {
       String response = http.getString();
